@@ -1,18 +1,29 @@
 import fs from 'fs';
+import dayjs from 'dayjs';
 import { getCleanCommits } from '../parsers/commitParser.js';
 
-export async function generateChangelog() {
-  const grouped = await getCleanCommits();
+const typeEmojis = {
+  feat: '🚀',
+  fix: '🐛',
+  chore: '🧹',
+  other: '🧩',
+};
 
-  let changelog = '# Changelog\n\n';
+export async function generateChangelog(outputFile = 'CHANGELOG.md') {
+  const grouped = await getCleanCommits();
+  const date = dayjs().format('YYYY-MM-DD');
+  let changelog = `# 🧾 Changelog — ${date}\n\n`;
+
   for (const [type, commits] of Object.entries(grouped)) {
-    changelog += `## ${type}\n`;
+    const emoji = typeEmojis[type] || '✨';
+    changelog += `## ${emoji} ${type.toUpperCase()}\n`;
     commits.forEach(msg => {
-      changelog += `- ${msg}\n`;
+      const cleaned = msg.replace(/^(feat|fix|chore)(\(.+\))?:/, '').trim();
+      changelog += `- ${cleaned}\n`;
     });
     changelog += '\n';
   }
 
-  fs.writeFileSync('CHANGELOG.md', changelog);
+  fs.writeFileSync(outputFile, changelog);
   console.log('✅ Changelog generated successfully!');
 }
